@@ -1,0 +1,31 @@
+# Built artifacts
+bin/
+gen/
+out/
+build/
+.gradle/
+app/build/
+
+# Android Studio and IntelliJ files
+.idea/
+*.iml
+*.iws
+*.ipr
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Signing files
+*.jks
+*.keystore
+
+# Google Services (Keep this commented out if you WANT to share your Firebase config on GitHub)
+# app/google-services.json
+
+# User-specific files
+.navigation/
