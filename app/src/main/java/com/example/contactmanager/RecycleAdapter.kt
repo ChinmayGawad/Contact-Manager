@@ -7,75 +7,130 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.Adapter
 
-class RecycleAdapter(var arrayList: ArrayList<Contacts>, var context: Activity) :
-    Adapter<RecycleAdapter.MyViewHolder>() {
+sealed class ContactListItem {
+    data class Header(val letter: String) : ContactListItem()
+    data class ContactItem(val contact: Contact) : ContactListItem()
+}
 
-    private var arrayListFull: ArrayList<Contacts> = ArrayList(arrayList)
-    private lateinit var myListener: onItemClickListener
+class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    interface onItemClickListener {
-        fun onItemClick(position: Int)
+    private var contactsListFull: List<Contact> = ArrayList(contactsList)
+    private var displayList: ArrayList<ContactListItem> = ArrayList()
+    private lateinit var myListener: OnItemClickListener
+
+    private val VIEW_TYPE_HEADER = 0
+    private val VIEW_TYPE_CONTACT = 1
+
+    interface OnItemClickListener {
+        fun onItemClick(contact: Contact)
     }
 
-    fun setOnItemClickListener(listener: onItemClickListener) {
+    fun setOnItemClickListener(listener: OnItemClickListener) {
         myListener = listener
     }
 
-    fun updateList(newList: ArrayList<Contacts>) {
-        arrayList = newList
-        arrayListFull = ArrayList(newList)
+    init {
+        updateDisplayList(contactsList)
+    }
+
+    fun updateList(newList: List<Contact>) {
+        contactsList = newList
+        contactsListFull = ArrayList(newList)
+        updateDisplayList(newList)
+    }
+
+    private fun updateDisplayList(list: List<Contact>) {
+        displayList.clear()
+        if (list.isEmpty()) {
+            notifyDataSetChanged()
+            return
+        }
+
+        val sortedList = list.sortedBy { it.name.lowercase() }
+        var currentLetter = ""
+
+        for (contact in sortedList) {
+            val firstLetter = contact.name.take(1).uppercase()
+            if (firstLetter != currentLetter) {
+                currentLetter = firstLetter
+                displayList.add(ContactListItem.Header(currentLetter))
+            }
+            displayList.add(ContactListItem.ContactItem(contact))
+        }
         notifyDataSetChanged()
     }
 
     fun filter(text: String) {
-        val filteredList = ArrayList<Contacts>()
-        for (item in arrayListFull) {
-            if (item.name.lowercase().contains(text.lowercase())) {
-                filteredList.add(item)
-            }
+        val filteredList = contactsListFull.filter {
+            it.name.lowercase().contains(text.lowercase())
         }
-        arrayList = filteredList
-        notifyDataSetChanged()
+        updateDisplayList(filteredList)
 
-        // Show/hide empty state based on search results
         if (context is MainActivity) {
             (context as MainActivity).updateEmptyState(filteredList.isEmpty())
         }
     }
 
-    override fun onCreateViewHolder(p0: ViewGroup, p1: Int): MyViewHolder {
-        val itemView = LayoutInflater.from(p0.context).inflate(R.layout.item_contact, p0, false)
-        return MyViewHolder(itemView, myListener)
-    }
-
-    override fun onBindViewHolder(p0: MyViewHolder, p1: Int) {
-        val currentItem = arrayList[p1]
-        p0.name.text = currentItem.name
-        p0.phone.text = currentItem.PhoneNo
-
-        // Guard against invalid image resource IDs (like 0 or 1) that cause crashes.
-        if (currentItem.imgId > 1000) {
-            p0.img.setImageResource(currentItem.imgId)
-        } else {
-            // Default avatar if no valid image ID is provided
-            p0.img.setImageResource(android.R.drawable.ic_menu_myplaces)
+    override fun getItemViewType(position: Int): Int {
+        return when (displayList[position]) {
+            is ContactListItem.Header -> VIEW_TYPE_HEADER
+            is ContactListItem.ContactItem -> VIEW_TYPE_CONTACT
         }
     }
 
-    override fun getItemCount(): Int {
-        return arrayList.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VIEW_TYPE_HEADER) {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_header, parent, false)
+            HeaderViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_contact, parent, false)
+            ContactViewHolder(view, myListener, displayList)
+        }
     }
 
-    class MyViewHolder(itemView: View, listener: onItemClickListener) : RecyclerView.ViewHolder(itemView) {
-        val name: TextView = itemView.findViewById(R.id.tv_contact_name)
-        val phone: TextView = itemView.findViewById(R.id.tv_contact_phone)
-        val img: ImageView = itemView.findViewById(R.id.iv_avatar)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = displayList[position]) {
+            is ContactListItem.Header -> (holder as HeaderViewHolder).bind(item.letter)
+            is ContactListItem.ContactItem -> (holder as ContactViewHolder).bind(item.contact)
+        }
+    }
+
+    override fun getItemCount(): Int = displayList.size
+
+    class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvLetter: TextView = itemView.findViewById(R.id.tv_header_letter)
+        fun bind(letter: String) {
+            tvLetter.text = letter
+        }
+    }
+
+    class ContactViewHolder(
+        itemView: View,
+        private val listener: OnItemClickListener,
+        private val displayList: List<ContactListItem>
+    ) : RecyclerView.ViewHolder(itemView) {
+        private val name: TextView = itemView.findViewById(R.id.tv_contact_name)
+        private val phone: TextView = itemView.findViewById(R.id.tv_contact_phone)
+        private val img: ImageView = itemView.findViewById(R.id.iv_avatar)
 
         init {
             itemView.setOnClickListener {
-                listener.onItemClick(adapterPosition)
+                val item = displayList[bindingAdapterPosition]
+                if (item is ContactListItem.ContactItem) {
+                    listener.onItemClick(item.contact)
+                }
+            }
+        }
+
+        fun bind(contact: Contact) {
+            name.text = contact.name
+            phone.text = contact.phoneNo
+            if (contact.imgId > 1000) {
+                img.setImageResource(contact.imgId)
+            } else {
+                img.setImageResource(android.R.drawable.ic_menu_myplaces)
             }
         }
     }

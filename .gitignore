@@ -24,8 +24,8 @@ Thumbs.db
 *.jks
 *.keystore
 
-# Google Services (Keep this commented out if you WANT to share your Firebase config on GitHub)
-# app/google-services.json
+# Google Services (Ignored for security - rotating the key is recommended)
+app/google-services.json
 
 # User-specific files
 .navigation/

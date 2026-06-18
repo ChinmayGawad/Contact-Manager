@@ -1,5 +1,6 @@
 package com.example.contactmanager
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
@@ -7,24 +8,21 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.contactmanager.databinding.ActivitySignUpBinding
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 
 
 class SignUp : AppCompatActivity() {
     private lateinit var binding : ActivitySignUpBinding
     private lateinit var auth : FirebaseAuth
-    private lateinit var database : FirebaseDatabase
-    lateinit var databaseReference : DatabaseReference
     override fun onCreate(savedInstanceState: Bundle?) {
+        applySavedTheme()
         super.onCreate(savedInstanceState)
         binding = ActivitySignUpBinding.inflate(layoutInflater)
         auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance()
         enableEdgeToEdge()
         setContentView(binding.root)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -42,12 +40,6 @@ class SignUp : AppCompatActivity() {
             if(isValidInput(email,password,confirmPassword)){
                 auth.createUserWithEmailAndPassword(email,password).addOnCompleteListener { task ->
                     if(task.isSuccessful){
-                        val userID = auth.currentUser?.uid
-
-                        databaseReference = database.getReference("Users").child(userID.toString())
-
-                        databaseReference.child("email").setValue(email)
-
                         val intent = Intent(this, LoginActivity::class.java)
                         startActivity(intent)
                         finish()
@@ -91,5 +83,15 @@ class SignUp : AppCompatActivity() {
         }
 
         return valid
+    }
+
+    private fun applySavedTheme() {
+        val sharedPref = getSharedPreferences("theme_pref", Context.MODE_PRIVATE)
+        val themeMode = sharedPref.getInt("theme_mode", 0) // 0: System, 1: Light, 2: Dark
+        when (themeMode) {
+            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
     }
 }

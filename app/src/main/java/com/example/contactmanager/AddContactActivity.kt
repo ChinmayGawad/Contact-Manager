@@ -1,36 +1,37 @@
 package com.example.contactmanager
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.contactmanager.databinding.ActivityAddContactBinding
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.launch
 
 class AddContactActivity : AppCompatActivity() {
 
     private lateinit var bind: ActivityAddContactBinding
-    private lateinit var databaseReference: DatabaseReference
-    private lateinit var auth: FirebaseAuth
+    private lateinit var database: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applySavedTheme()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         bind = ActivityAddContactBinding.inflate(layoutInflater)
         setContentView(bind.root)
+
+        database = AppDatabase.getDatabase(this)
+
         ViewCompat.setOnApplyWindowInsetsListener(bind.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        auth = FirebaseAuth.getInstance()
 
         bind.btnSaveContact.setOnClickListener {
             val name = bind.etContactName.text.toString().trim()
@@ -38,15 +39,7 @@ class AddContactActivity : AppCompatActivity() {
             val email = bind.etContactEmail.text.toString().trim()
 
             if (validName(name) && validPhone(phone)) {
-                val currentUser: FirebaseUser? = auth.currentUser
-                if (currentUser != null) {
-                    saveContact(currentUser.uid, name, phone, email)
-                } else {
-                    val i = Intent(this, LoginActivity::class.java)
-                    Toast.makeText(this, "Login First", Toast.LENGTH_SHORT).show()
-                    startActivity(i)
-                    finish()
-                }
+                saveContactLocally(name, phone, email)
             } else {
                 if (!validName(name)) {
                     Toast.makeText(this, "Enter Name", Toast.LENGTH_SHORT).show()
@@ -57,24 +50,15 @@ class AddContactActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveContact(uid: String, name: String, phone: String, email: String) {
-        val contact = Contacts(name, phone, email)
-        databaseReference = FirebaseDatabase.getInstance("https://contact-manager-9f08c-default-rtdb.asia-southeast1.firebasedatabase.app/")
-            .getReference()
-            .child("Contacts")
-            .child(uid)
-            .child(phone)
-
-        databaseReference.setValue(contact)
-            .addOnSuccessListener {
-                Toast.makeText(this, "User Added Successfully", Toast.LENGTH_SHORT).show()
-                val i = Intent(this, MainActivity::class.java)
-                startActivity(i)
-                finish()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error: $e", Toast.LENGTH_SHORT).show()
-            }
+    private fun saveContactLocally(name: String, phone: String, email: String) {
+        val contact = Contact(name = name, phoneNo = phone, email = email)
+        lifecycleScope.launch {
+            database.contactDao().insertContact(contact)
+            Toast.makeText(this@AddContactActivity, "Contact Saved Locally", Toast.LENGTH_SHORT).show()
+            val i = Intent(this@AddContactActivity, MainActivity::class.java)
+            startActivity(i)
+            finish()
+        }
     }
 
     private fun validName(name: String): Boolean {
@@ -96,6 +80,16 @@ class AddContactActivity : AppCompatActivity() {
         } else {
             bind.tilPhone.error = null
             return true
+        }
+    }
+
+    private fun applySavedTheme() {
+        val sharedPref = getSharedPreferences("theme_pref", Context.MODE_PRIVATE)
+        val themeMode = sharedPref.getInt("theme_mode", 0) // 0: System, 1: Light, 2: Dark
+        when (themeMode) {
+            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
 }
