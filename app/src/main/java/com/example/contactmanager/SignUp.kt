@@ -86,7 +86,7 @@ class SignUp : AppCompatActivity() {
     }
 
     private fun applySavedTheme() {
-        val sharedPref = getSharedPreferences("theme_pref", Context.MODE_PRIVATE)
+        val sharedPref = getSharedPreferences("theme_pref", MODE_PRIVATE)
         val themeMode = sharedPref.getInt("theme_mode", 0) // 0: System, 1: Light, 2: Dark
         when (themeMode) {
             1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
