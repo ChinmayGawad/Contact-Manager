@@ -1,27 +1,17 @@
 package com.example.contactmanager
 
-import android.Manifest
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.hardware.camera2.CameraExtensionSession
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.view.View
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.appcompat.widget.SearchView
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.contactmanager.databinding.ActivityMainBinding
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -80,6 +70,7 @@ class MainActivity : AppCompatActivity() {
                 i.putExtra("PhoneNo", contact.phoneNo)
                 i.putExtra("email", contact.email)
                 i.putExtra("imgId", contact.imgId)
+                i.putExtra("imageUri",contact.imageUri)
                 startActivity(i)
             }
         })

@@ -12,5 +12,6 @@ data class Contact(
     val name: String,
     val phoneNo: String,
     val email: String,
-    val imgId: Int = 0
+    val imgId: Int = 0,
+    val imageUri : String? = null
 )

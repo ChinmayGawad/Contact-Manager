@@ -20,18 +20,39 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Avatar Placeholder -->
-        <ImageView
-            android:id="@+id/iv_avatar"
+        <!-- Avatar Container -->
+        <FrameLayout
+            android:id="@+id/avatar_container"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/circle_background"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_myplaces"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="#4CAF50" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Initial Letter (Shown when no image is available) -->
+            <TextView
+                android:id="@+id/tv_contact_initial"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/circle_background"
+                android:gravity="center"
+                android:text="J"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <!-- Contact Photo (Shown when image exists) -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+        </FrameLayout>
+
+
 
         <!-- Contact Name -->
         <TextView
@@ -44,8 +65,8 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/iv_avatar"
-            app:layout_constraintTop_toTopOf="@id/iv_avatar" />
+            app:layout_constraintStart_toEndOf="@id/avatar_container"
+            app:layout_constraintTop_toTopOf="@id/avatar_container" />
 
         <!-- Contact Phone Number -->
         <TextView
@@ -57,9 +78,9 @@
             android:text="+1 (555) 123-4567"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="@id/iv_avatar"
+            app:layout_constraintBottom_toBottomOf="@id/avatar_container"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/iv_avatar"
+            app:layout_constraintStart_toEndOf="@id/avatar_container"
             app:layout_constraintTop_toBottomOf="@id/tv_contact_name" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

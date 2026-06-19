@@ -1,12 +1,14 @@
 package com.example.contactmanager
 
 import android.app.Activity
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
 sealed class ContactListItem {
     data class Header(val letter: String) : ContactListItem()
@@ -22,7 +24,6 @@ class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
 
     private val VIEW_TYPE_HEADER = 0
     private val VIEW_TYPE_CONTACT = 1
-
     interface OnItemClickListener {
         fun onItemClick(contact: Contact)
     }
@@ -112,8 +113,10 @@ class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
         private val displayList: List<ContactListItem>
     ) : RecyclerView.ViewHolder(itemView) {
         private val name: TextView = itemView.findViewById(R.id.tv_contact_name)
+        private val tvInitial : TextView = itemView.findViewById(R.id.tv_contact_initial)
         private val phone: TextView = itemView.findViewById(R.id.tv_contact_phone)
-        private val img: ImageView = itemView.findViewById(R.id.iv_avatar)
+        private val ivAvatar: ImageView = itemView.findViewById(R.id.iv_avatar)
+
 
         init {
             itemView.setOnClickListener {
@@ -127,10 +130,24 @@ class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
         fun bind(contact: Contact) {
             name.text = contact.name
             phone.text = contact.phoneNo
-            if (contact.imgId > 1000) {
-                img.setImageResource(contact.imgId)
-            } else {
-                img.setImageResource(android.R.drawable.ic_menu_myplaces)
+
+            //Initial Letter Avatar
+            val firstLetter = contact.name.take(1).uppercase()
+            tvInitial.text = firstLetter
+
+            val colors = listOf("#F44336", "#E91E63", "#9C27B0","#673AB7", "#3F51B5", "#2196F3")
+            val colorIndex = Math.abs(contact.name.hashCode()) % colors.size
+            tvInitial.background.setTint(Color.parseColor(colors[colorIndex]))
+
+            //local image Fetching
+            if (!contact.imageUri.isNullOrEmpty()){
+                ivAvatar.visibility = View.VISIBLE
+                tvInitial.visibility = View.GONE
+
+                Glide.with(itemView.context).load(contact.imageUri).into(ivAvatar)
+            }else{
+                ivAvatar.visibility = View.GONE
+                tvInitial.visibility = View.VISIBLE
             }
         }
     }

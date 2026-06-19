@@ -18,6 +18,11 @@ class AddContactActivity : AppCompatActivity() {
     private lateinit var bind: ActivityAddContactBinding
     private lateinit var database: AppDatabase
 
+    private var selectedImageUri: String? = null
+
+    private val PICK_IMAGE_CODE = 102
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         applySavedTheme()
         super.onCreate(savedInstanceState)
@@ -31,6 +36,15 @@ class AddContactActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        // In your Activity, you would call this when clicking an "Add Photo" button
+        bind.ivNewAvatar.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*" // We only want images
+            }
+            startActivityForResult(intent, PICK_IMAGE_CODE)
         }
 
         bind.btnSaveContact.setOnClickListener {
@@ -50,8 +64,26 @@ class AddContactActivity : AppCompatActivity() {
         }
     }
 
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_IMAGE_CODE && resultCode == RESULT_OK) {
+            val uri = data?.data
+            if (uri != null) {
+                // "Save the key" so we can see the photo again later
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                // Store the link as a String
+                selectedImageUri = uri.toString()
+
+                // (Optional) Show the picked image in your UI immediately
+                bind.ivNewAvatar.setImageURI(uri)
+            }
+        }
+    }
+
     private fun saveContactLocally(name: String, phone: String, email: String) {
-        val contact = Contact(name = name, phoneNo = phone, email = email)
+        val contact = Contact(name = name, phoneNo = phone, email = email, imageUri = selectedImageUri)
         lifecycleScope.launch {
             database.contactDao().insertContact(contact)
             Toast.makeText(this@AddContactActivity, "Contact Saved Locally", Toast.LENGTH_SHORT).show()
@@ -92,4 +124,6 @@ class AddContactActivity : AppCompatActivity() {
             else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
+
+
 }
