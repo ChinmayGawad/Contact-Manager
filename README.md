@@ -20,7 +20,15 @@ A sleek and efficient Android application built with Kotlin to manage your conta
 
 ## 📸 Screenshots
 
-*(Add your screenshots here to make your repo look great!)*
+<p align="center">
+  <img src="./screenshots/main_screen.png" width="230" alt="Main Screen" />
+  <img src="./screenshots/settings_screen.png" width="230" alt="Settings Screen" />
+  <img src="./screenshots/add_contact.png" width="230" alt="Add Contact" />
+</p>
+
+*Visual overview of the Contact Manager app interface.*
+
+*Visual overview of the Contact Manager app interface.*
 
 ## ⚙️ Setup and Installation
 
