@@ -4,8 +4,12 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "contacts",
-    indices = [Index(value = ["phoneNo"], unique = true)]
+@Entity(
+    tableName = "contacts",
+    indices = [
+        Index(value = ["phoneNo"], unique = true),
+        Index(value = ["name"])
+    ]
 )
 data class Contact(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -13,5 +17,5 @@ data class Contact(
     val phoneNo: String,
     val email: String,
     val imgId: Int = 0,
-    val imageUri : String? = null
+    val imageUri: String? = null
 )
