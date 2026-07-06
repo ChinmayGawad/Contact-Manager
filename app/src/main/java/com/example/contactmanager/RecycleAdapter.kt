@@ -1,85 +1,74 @@
 package com.example.contactmanager
 
-import android.app.Activity
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DecodeFormat
+import com.bumptech.glide.request.RequestOptions
 
 sealed class ContactListItem {
     data class Header(val letter: String) : ContactListItem()
     data class ContactItem(val contact: Contact) : ContactListItem()
 }
 
-class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class RecycleAdapter(
+    private val onItemClickListener: OnItemClickListener,
+    private val onEmptyStateChanged: (Boolean) -> Unit = {}
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var contactsListFull: List<Contact> = ArrayList(contactsList)
-    private var displayList: ArrayList<ContactListItem> = ArrayList()
-    private lateinit var myListener: OnItemClickListener
+    private var displayList: List<ContactListItem> = emptyList()
+    private var contactsListFull: List<Contact> = emptyList()
 
-    private val VIEW_TYPE_HEADER = 0
-    private val VIEW_TYPE_CONTACT = 1
     interface OnItemClickListener {
         fun onItemClick(contact: Contact)
     }
 
-    fun setOnItemClickListener(listener: OnItemClickListener) {
-        myListener = listener
-    }
-
-    init {
-        updateDisplayList(contactsList)
-    }
-
     fun updateList(newList: List<Contact>) {
-        contactsList = newList
         contactsListFull = ArrayList(newList)
         updateDisplayList(newList)
+        onEmptyStateChanged(newList.isEmpty())
     }
 
-    private fun updateDisplayList(list: List<Contact>) {
-        displayList.clear()
-        if (list.isEmpty()) {
-            notifyDataSetChanged()
-            return
-        }
+    private fun updateDisplayList(newList: List<Contact>) {
+        val newDisplayList = buildDisplayList(newList)
+        val diffResult = DiffUtil.calculateDiff(
+            ContactListDiffCallback(displayList, newDisplayList)
+        )
+        displayList = newDisplayList
+        diffResult.dispatchUpdatesTo(this)
+    }
 
-        val sortedList = list.sortedBy { it.name.lowercase() }
+    private fun buildDisplayList(contacts: List<Contact>): List<ContactListItem> {
+        if (contacts.isEmpty()) return emptyList()
+        val sorted = contacts.sortedBy { it.name.lowercase() }
+        val result = mutableListOf<ContactListItem>()
         var currentLetter = ""
-
-        for (contact in sortedList) {
+        for (contact in sorted) {
             val firstLetter = contact.name.take(1).uppercase()
             if (firstLetter != currentLetter) {
                 currentLetter = firstLetter
-                displayList.add(ContactListItem.Header(currentLetter))
+                result.add(ContactListItem.Header(currentLetter))
             }
-            displayList.add(ContactListItem.ContactItem(contact))
+            result.add(ContactListItem.ContactItem(contact))
         }
-        notifyDataSetChanged()
+        return result
     }
 
     fun filter(text: String) {
-        val filteredList = contactsListFull.filter {
+        val filtered = contactsListFull.filter {
             it.name.lowercase().contains(text.lowercase())
         }
-        updateDisplayList(filteredList)
-
-        if (context is MainActivity) {
-            (context as MainActivity).updateEmptyState(filteredList.isEmpty())
-        }
+        updateDisplayList(filtered)
+        onEmptyStateChanged(filtered.isEmpty())
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return when (displayList[position]) {
-            is ContactListItem.Header -> VIEW_TYPE_HEADER
-            is ContactListItem.ContactItem -> VIEW_TYPE_CONTACT
-        }
-    }
+    override fun getItemViewType(position: Int): Int =
+        if (displayList[position] is ContactListItem.Header) VIEW_TYPE_HEADER else VIEW_TYPE_CONTACT
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == VIEW_TYPE_HEADER) {
@@ -87,14 +76,17 @@ class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
             HeaderViewHolder(view)
         } else {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_contact, parent, false)
-            ContactViewHolder(view, myListener, displayList)
+            ContactViewHolder(view)
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = displayList[position]) {
             is ContactListItem.Header -> (holder as HeaderViewHolder).bind(item.letter)
-            is ContactListItem.ContactItem -> (holder as ContactViewHolder).bind(item.contact)
+            is ContactListItem.ContactItem -> {
+                (holder as ContactViewHolder).bind(item.contact)
+                holder.itemView.setOnClickListener { onItemClickListener.onItemClick(item.contact) }
+            }
         }
     }
 
@@ -107,48 +99,67 @@ class RecycleAdapter(var contactsList: List<Contact>, var context: Activity) :
         }
     }
 
-    class ContactViewHolder(
-        itemView: View,
-        private val listener: OnItemClickListener,
-        private val displayList: List<ContactListItem>
-    ) : RecyclerView.ViewHolder(itemView) {
+    class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val name: TextView = itemView.findViewById(R.id.tv_contact_name)
-        private val tvInitial : TextView = itemView.findViewById(R.id.tv_contact_initial)
+        private val tvInitial: TextView = itemView.findViewById(R.id.tv_contact_initial)
         private val phone: TextView = itemView.findViewById(R.id.tv_contact_phone)
         private val ivAvatar: ImageView = itemView.findViewById(R.id.iv_avatar)
-
-
-        init {
-            itemView.setOnClickListener {
-                val item = displayList[bindingAdapterPosition]
-                if (item is ContactListItem.ContactItem) {
-                    listener.onItemClick(item.contact)
-                }
-            }
-        }
 
         fun bind(contact: Contact) {
             name.text = contact.name
             phone.text = contact.phoneNo
 
-            //Initial Letter Avatar
             val firstLetter = contact.name.take(1).uppercase()
             tvInitial.text = firstLetter
 
-            val colors = listOf("#F44336", "#E91E63", "#9C27B0","#673AB7", "#3F51B5", "#2196F3")
-            val colorIndex = Math.abs(contact.name.hashCode()) % colors.size
-            tvInitial.background.setTint(Color.parseColor(colors[colorIndex]))
+            val colors = listOf("#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3")
+            val colorIndex = (contact.name.hashCode() and 0x7FFFFFFF) % colors.size
+            tvInitial.background.setTint(android.graphics.Color.parseColor(colors[colorIndex]))
 
-            //local image Fetching
-            if (!contact.imageUri.isNullOrEmpty()){
+            if (!contact.imageUri.isNullOrEmpty()) {
                 ivAvatar.visibility = View.VISIBLE
                 tvInitial.visibility = View.GONE
-
-                Glide.with(itemView.context).load(contact.imageUri).into(ivAvatar)
-            }else{
+                Glide.with(itemView.context)
+                    .load(contact.imageUri)
+                    .apply(
+                        RequestOptions()
+                            .circleCrop()
+                            .format(DecodeFormat.PREFER_RGB_565)
+                            .override(96, 96)
+                    )
+                    .into(ivAvatar)
+            } else {
                 ivAvatar.visibility = View.GONE
                 tvInitial.visibility = View.VISIBLE
             }
         }
+    }
+
+    private class ContactListDiffCallback(
+        private val oldList: List<ContactListItem>,
+        private val newList: List<ContactListItem>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize() = oldList.size
+        override fun getNewListSize() = newList.size
+
+        override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
+            val old = oldList[oldPos]
+            val new = newList[newPos]
+            return when {
+                old is ContactListItem.Header && new is ContactListItem.Header ->
+                    old.letter == new.letter
+                old is ContactListItem.ContactItem && new is ContactListItem.ContactItem ->
+                    old.contact.id == new.contact.id
+                else -> false
+            }
+        }
+
+        override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean =
+            oldList[oldPos] == newList[newPos]
+    }
+
+    companion object {
+        private const val VIEW_TYPE_HEADER = 0
+        private const val VIEW_TYPE_CONTACT = 1
     }
 }

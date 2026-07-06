@@ -3,25 +3,33 @@ package com.example.contactmanager
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.contactmanager.databinding.ActivityContactDetailsBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ContactDetails : AppCompatActivity() {
+
     private lateinit var binding: ActivityContactDetailsBinding
     private lateinit var database: AppDatabase
+    private var phone: String? = null
+    private var contactName: String? = null
+
+    companion object {
+        private val AVATAR_COLORS = listOf(
+            "#F44336", "#E91E63", "#9C27B0", "#673AB7",
+            "#3F51B5", "#2196F3", "#009688", "#4CAF50"
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        applySavedTheme()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityContactDetailsBinding.inflate(layoutInflater)
@@ -35,11 +43,16 @@ class ContactDetails : AppCompatActivity() {
             insets
         }
 
+        extractIntentData()
+        setupListeners()
+    }
+
+    private fun extractIntentData() {
         val name = intent.getStringExtra("name")
         val email = intent.getStringExtra("email")
-        val phone = intent.getStringExtra("PhoneNo")
-        intent.getIntExtra("imgId", android.R.drawable.ic_menu_myplaces)
+        phone = intent.getStringExtra("PhoneNo")
         val imageUriString = intent.getStringExtra("imageUri")
+        contactName = name
 
         binding.tvDetailName.text = name
         binding.tvDetailEmail.text = email
@@ -56,40 +69,15 @@ class ContactDetails : AppCompatActivity() {
             val firstLetter = name?.take(1)?.uppercase()
             binding.tvDetailInitial.text = firstLetter
 
-            val colors = listOf("#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3")
-            val colorIndex = Math.abs(name.hashCode()) % colors.size
-
-            binding.tvDetailInitial.background.setTint(Color.parseColor(colors[colorIndex]))
-
-
+            val colorIndex = (name.hashCode() and 0x7FFFFFFF) % AVATAR_COLORS.size
+            binding.tvDetailInitial.background.setTint(Color.parseColor(AVATAR_COLORS[colorIndex]))
         }
+    }
 
-        binding.btnBack.setOnClickListener {
-            finish()
-        }
+    private fun setupListeners() {
+        binding.btnBack.setOnClickListener { finish() }
 
-        binding.btnDeleteContact.setOnClickListener {
-            if (phone != null) {
-                lifecycleScope.launch {
-                    val contact = database.contactDao().getContactByPhone(phone)
-                    if (contact != null) {
-                        database.contactDao().deleteContact(contact)
-                        Toast.makeText(this@ContactDetails, "Contact Deleted!!", Toast.LENGTH_SHORT)
-                            .show()
-                        finish()
-                    } else {
-                        Toast.makeText(
-                            this@ContactDetails,
-                            "Error: Contact not found",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            } else {
-                Toast.makeText(this, "Error: Could not find contact phone", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
+        binding.btnDeleteContact.setOnClickListener { showDeleteConfirmation() }
 
         binding.fabCall.setOnClickListener {
             val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
@@ -101,19 +89,34 @@ class ContactDetails : AppCompatActivity() {
             try {
                 startActivity(smsIntent)
             } catch (e: Exception) {
-                Log.e("Messaging", "Cant find or open the messaging app")
                 Toast.makeText(this, "No messaging app installed", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun applySavedTheme() {
-        val sharedPref = getSharedPreferences("theme_pref", MODE_PRIVATE)
-        val themeMode = sharedPref.getInt("theme_mode", 0) // 0: System, 1: Light, 2: Dark
-        when (themeMode) {
-            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+    private fun showDeleteConfirmation() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete Contact")
+            .setMessage("Are you sure you want to delete ${contactName ?: "this contact"}?")
+            .setPositiveButton("Delete") { _, _ -> deleteContact() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteContact() {
+        if (phone == null) {
+            Toast.makeText(this, "Error: Could not find contact", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            val contact = database.contactDao().getContactByPhone(phone!!)
+            if (contact != null) {
+                database.contactDao().deleteContact(contact)
+                Toast.makeText(this@ContactDetails, "Contact deleted", Toast.LENGTH_SHORT).show()
+                finish()
+            } else {
+                Toast.makeText(this@ContactDetails, "Contact not found", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
