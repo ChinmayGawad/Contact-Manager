@@ -2,5 +2,28 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="RED">#F53729</color>
+
+    <!-- Material Design 3 Color Palette -->
+    <color name="md3_primary">#1565C0</color>
+    <color name="md3_on_primary">#FFFFFF</color>
+    <color name="md3_primary_container">#D1E4FF</color>
+    <color name="md3_on_primary_container">#001D36</color>
+
+    <color name="md3_secondary">#00897B</color>
+    <color name="md3_on_secondary">#FFFFFF</color>
+    <color name="md3_secondary_container">#B2DFDB</color>
+
+    <color name="md3_tertiary">#7C5800</color>
+    <color name="md3_on_tertiary">#FFFFFF</color>
+
+    <color name="md3_error">#B3261E</color>
+    <color name="md3_on_error">#FFFFFF</color>
+
+    <color name="md3_surface">#FFFBFE</color>
+    <color name="md3_on_surface">#1C1B1F</color>
+    <color name="md3_surface_variant">#E7E0EC</color>
+    <color name="md3_on_surface_variant">#49454F</color>
+
+    <color name="md3_outline">#79747E</color>
+    <color name="md3_outline_variant">#CAC4D0</color>
 </resources>
