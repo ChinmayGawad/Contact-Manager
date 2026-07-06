@@ -25,8 +25,13 @@ out/
 # Kotlin
 *.class
 
-# Documentation (audit/report files)
-*.md
+# Audit and report documentation (not tracked)
+PROJECT_AUDIT.md
+SECURITY_AUDIT.md
+PERFORMANCE_REPORT.md
+REFACTORING_PLAN.md
+UI_IMPROVEMENTS.md
+FILE_CHANGES.md
 
 # IDE
 *.swp
