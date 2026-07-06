@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">Contact Manager</string>
+    <string name="search_hint">Search contacts…</string>
+    <string name="empty_state_title">No contacts yet</string>
+    <string name="empty_state_subtitle">Tap + to add your first contact</string>
+    <string name="save_contact">Save Contact</string>
+    <string name="delete_contact">Delete Contact</string>
+    <string name="delete_confirmation">Are you sure you want to delete %1$s?</string>
+    <string name="settings_title">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="light_mode">Light</string>
+    <string name="dark_mode">Dark</string>
+    <string name="system_mode">System</string>
+    <string name="import_contacts">Import Contacts from Device</string>
+    <string name="export_contacts">Export Contacts to File</string>
+    <string name="import_confirmation">This will import contacts from your device. Duplicates will be skipped.</string>
+    <string name="add_photo">Add photo</string>
+    <string name="name_required">Name is required</string>
+    <string name="phone_required">Phone number is required</string>
+    <string name="phone_invalid">Invalid phone number</string>
+    <string name="contact_saved">Contact saved</string>
+    <string name="contact_deleted">Contact deleted</string>
+    <string name="about">About</string>
+    <string name="version_format">Version %1$s</string>
 </resources>
