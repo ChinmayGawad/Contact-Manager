@@ -25,6 +25,9 @@ out/
 # Kotlin
 *.class
 
+# Documentation (audit/report files)
+*.md
+
 # IDE
 *.swp
 *swo
