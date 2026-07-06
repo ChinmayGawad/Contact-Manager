@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme Material Design 3 colors -->
+    <color name="md3_primary_dark">#99C5FF</color>
+    <color name="md3_on_primary_dark">#003258</color>
+    <color name="md3_primary_container_dark">#00497D</color>
+    <color name="md3_on_primary_container_dark">#D1E4FF</color>
+
+    <color name="md3_secondary_dark">#4DB6AC</color>
+    <color name="md3_on_secondary_dark">#003731</color>
+    <color name="md3_secondary_container_dark">#005047</color>
+
+    <color name="md3_tertiary_dark">#FFB74D</color>
+    <color name="md3_on_tertiary_dark">#442800</color>
+
+    <color name="md3_error_dark">#F2B8B5</color>
+    <color name="md3_on_error_dark">#601410</color>
+
+    <color name="md3_surface_dark">#1C1B1F</color>
+    <color name="md3_on_surface_dark">#E6E1E5</color>
+    <color name="md3_surface_variant_dark">#44464F</color>
+    <color name="md3_on_surface_variant_dark">#CAC4D0</color>
+
+    <color name="md3_outline_dark">#938F99</color>
+    <color name="md3_outline_variant_dark">#44464F</color>
+</resources>
